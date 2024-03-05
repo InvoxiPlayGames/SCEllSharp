@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using System.Text;
 
 namespace SCEllSharp.PKG
 {
@@ -38,6 +34,27 @@ namespace SCEllSharp.PKG
             ContentID = Encoding.UTF8.GetString(ContentIDBytes);
             DebugDigest = stream.ReadBytes(0x10);
             PackageIV = stream.ReadBytes(0x10);
+        }
+
+        public void WriteHeader(Stream stream)
+        {
+            stream.WriteUInt32BE(PackageMagic);
+            stream.WriteUInt16BE(PackageRevision);
+            stream.WriteUInt16BE(PackageType);
+            stream.WriteUInt32BE(MetadataOffset);
+            stream.WriteUInt32BE(MetadataCount);
+            stream.WriteUInt32BE(MetadataSize);
+            stream.WriteUInt32BE(NumberOfItems);
+            stream.WriteUInt64BE(TotalPackageSize);
+            stream.WriteUInt64BE(DataOffset);
+            stream.WriteUInt64BE(DataSize);
+            // pad out content ID to 0x30 bytes
+            byte[] ContentIDBytes = new byte[0x30];
+            byte[] ContentIDASCII = Encoding.UTF8.GetBytes(ContentID!);
+            Array.Copy(ContentIDASCII, ContentIDBytes, ContentIDASCII.Length);
+            stream.Write(ContentIDBytes, 0, 0x30);
+            stream.Write(DebugDigest!, 0, 0x10);
+            stream.Write(PackageIV!, 0, 0x10);
         }
     }
 }

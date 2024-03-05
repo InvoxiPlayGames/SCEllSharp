@@ -128,7 +128,7 @@ namespace SCEllSharp.Crypto
 
         public override void Flush()
         {
-            throw new NotImplementedException();
+            _stream.Flush();
         }
 
         public override void SetLength(long value)
@@ -138,7 +138,36 @@ namespace SCEllSharp.Crypto
 
         public override void Write(byte[] buffer, int offset, int count)
         {
-            throw new NotImplementedException();
+            int offset_into_block = (int)(_position % 0x10);
+            int block_count = (count / 0x10) + 1;
+
+            // read from the file into the buffer (reading encrypted contents)
+            int bytes_crypt = 0;
+            int bytes_left = buffer.Length < count ? buffer.Length : count;
+
+            byte[] cryptstream = new byte[0x10];
+            UpdatePosition(_position); // make sure our original counter is correct
+            for (int i = 0; i < block_count; i++)
+            {
+                // generate our XOR stream for the CTR
+                _aesEncryptor.TransformBlock(_counter, 0, 0x10, cryptstream, 0);
+                for (int j = offset_into_block; j < 0x10 && bytes_crypt < bytes_left; j++, bytes_crypt++)
+                    cryptstream[j] ^= buffer[offset + j];
+
+                _stream.Write(cryptstream, offset_into_block, bytes_left < 0x10 ? bytes_left : 0x10 - offset_into_block);
+
+                bytes_left -= 0x10;
+                if (bytes_left < 0) bytes_left = 0;
+
+                // if we're going into a new block, don't offset anymore and increment our counter
+                offset_into_block = 0;
+                IncrementCounter(_counter);
+            }
+
+            // increment our stream's position
+            _position += count;
+
+            return;
         }
     }
 }

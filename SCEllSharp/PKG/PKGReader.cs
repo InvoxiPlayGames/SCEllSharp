@@ -8,20 +8,47 @@ namespace SCEllSharp.PKG
         public PKGHeader Header;
         public AES128CTRStream EncryptedData;
         public PKGFilesystem Filesystem;
+        private PKGMetadataEntry[] MetadataEntries;
 
         public PKGReader(Stream file)
         {
+            file.Position = 0;
             File = file;
+
+            // read the file header and make sure it's actually a valid pkg
             Header = new PKGHeader();
-            Header.ReadHeader(file);
+            Header.ReadHeader(File);
             if (Header.PackageMagic != 0x7F504B47)
                 throw new Exception("Package magic was not that of a PKG!");
             if (Header.PackageRevision != 0x8000)
                 throw new Exception("Package revision was not that of a retail PKG!");
             if (Header.PackageType != 0x0001)
                 throw new Exception("Package type was not that of a PS3 PKG!");
-            // TODO: read metadata entries
-            file.Position = (long)Header.DataOffset;
+            
+            // verify the integrity of the file header
+            byte[] digestbytes = File.ReadBytes(0x40);
+            MemoryStream validstream = new MemoryStream(0x80);
+            Header.WriteHeader(validstream);
+            (bool cmac, bool sig, bool sha1) isPkgValid = PKGDigest.ValidatePKGDigest(validstream.ToArray(), 0x80, digestbytes);
+
+            // read each metadata entry from the pkg file
+            MetadataEntries = new PKGMetadataEntry[Header.MetadataCount];
+            File.Position = Header.MetadataOffset;
+            for (int i = 0; i < Header.MetadataCount; i++)
+            {
+                MetadataEntries[i] = new PKGMetadataEntry();
+                MetadataEntries[i].ReadEntry(File);
+            }
+
+            // validate the signature on the metadata bytes
+            byte[] metadigestbytes = File.ReadBytes(0x40);
+            MemoryStream metavalidstream = new MemoryStream((int)Header.MetadataSize);
+            foreach (PKGMetadataEntry entry in MetadataEntries)
+                entry.WriteEntry(metavalidstream);
+            (bool cmac, bool sig, bool sha1) isMetaValid = PKGDigest.ValidatePKGDigest(metavalidstream.ToArray(), (int)Header.MetadataSize - 0x40, metadigestbytes);
+
+            // read the filesystem (this is a work-in-progress)
+            File.Position = (long)Header.DataOffset;
             EncryptedData = new AES128CTRStream(file, PS3Keys.PKGKeyAES, Header.PackageIV!, (long)Header.DataSize);
             Filesystem = new PKGFilesystem(EncryptedData, Header.NumberOfItems);
         }

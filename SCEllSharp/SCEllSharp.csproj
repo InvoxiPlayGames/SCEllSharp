@@ -6,4 +6,8 @@
     <Nullable>enable</Nullable>
   </PropertyGroup>
 
+  <ItemGroup>
+    <PackageReference Include="Dorssel.Security.Cryptography.AesExtra" Version="1.1.0" />
+  </ItemGroup>
+
 </Project>

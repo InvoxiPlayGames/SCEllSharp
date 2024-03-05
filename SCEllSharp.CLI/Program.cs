@@ -12,10 +12,11 @@ if (args[0] != "ExtractPKG")
     return;
 }
 
+string fileName = args[1];
 string outputPath = args[2];
 Directory.CreateDirectory(outputPath);
 
-FileStream fs = File.OpenRead(args[1]);
+FileStream fs = File.OpenRead(fileName);
 
 PKGReader pkg = new PKGReader(fs);
 Console.WriteLine(pkg.Header.ContentID);
@@ -27,14 +28,3 @@ foreach(PKGFile file in pkg.Filesystem.Files)
     else
         pkg.Filesystem.ExtractFile(file, Path.Combine(outputPath, file.Filename));
 }
-
-//AesCmac a = new AesCmac(PS3Keys.PKGKeyAES);
-//a.ComputeHash(header)
-
-//ECParameters ecp = new ECParameters
-//{
-//    Curve = PS3Keys.VSHCurve2InvECDSA,
-//    Q = PS3Keys.NPDRMPublicKeyECDSA
-//};
-//ECDsa dsa = ECDsa.Create(ecp);
-//Console.WriteLine(dsa.VerifyHash(sha1, signature));

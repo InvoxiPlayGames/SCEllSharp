@@ -1,6 +1,6 @@
 ﻿namespace SCEllSharp.NPDRM
 {
-    internal enum NPDRMType
+    public enum NPDRMType
     {
         Unknown = 0,
         Network = 1,

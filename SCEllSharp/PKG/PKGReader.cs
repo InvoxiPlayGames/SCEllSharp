@@ -1,14 +1,40 @@
 ﻿using SCEllSharp.Crypto;
+using SCEllSharp.NPDRM;
+using System.Buffers.Binary;
 
 namespace SCEllSharp.PKG
 {
     public class PKGReader
     {
-        public Stream File;
-        public PKGHeader Header;
-        public AES128CTRStream EncryptedData;
-        public PKGFilesystem Filesystem;
+        private Stream File;
+        private PKGHeader Header;
+        private AES128CTRStream EncryptedData;
         private PKGMetadataEntry[] MetadataEntries;
+
+        public PKGFile[] Files;
+
+        public string ContentID => Header.ContentID!;
+
+        public PKGContentType GetContentType()
+        {
+            foreach (PKGMetadataEntry type in MetadataEntries.Where((entry) => { return entry.Type == PKGMetadataType.ContentType; }))
+                return (PKGContentType)BinaryPrimitives.ReadUInt32BigEndian(type.Data);
+            return PKGContentType.Unknown;
+        }
+
+        public NPDRMType GetDRMType()
+        {
+            foreach (PKGMetadataEntry type in MetadataEntries.Where((entry) => { return entry.Type == PKGMetadataType.DRMType; }))
+                return (NPDRMType)BinaryPrimitives.ReadUInt32BigEndian(type.Data);
+            return NPDRMType.Unknown;
+        }
+
+        public PKGFlags GetFlags()
+        {
+            foreach (PKGMetadataEntry type in MetadataEntries.Where((entry) => { return entry.Type == PKGMetadataType.PackageType; }))
+                return (PKGFlags)BinaryPrimitives.ReadUInt32BigEndian(type.Data);
+            return PKGFlags.None;
+        }
 
         public PKGReader(Stream file)
         {
@@ -47,10 +73,17 @@ namespace SCEllSharp.PKG
                 entry.WriteEntry(metavalidstream);
             (bool cmac, bool sig, bool sha1) isMetaValid = PKGDigest.ValidatePKGDigest(metavalidstream.ToArray(), (int)Header.MetadataSize - 0x40, metadigestbytes);
 
-            // read the filesystem (this is a work-in-progress)
-            File.Position = (long)Header.DataOffset;
+            // set up the encrypted data stream
             EncryptedData = new AES128CTRStream(file, PS3Keys.PKGKeyAES, Header.PackageIV!, (long)Header.DataSize);
-            Filesystem = new PKGFilesystem(EncryptedData, Header.NumberOfItems);
+
+            // read in information about each file
+            Files = new PKGFile[Header.NumberOfItems];
+            for (int i = 0; i < Header.NumberOfItems; i++)
+            {
+                PKGFileEntry fileEntry = new PKGFileEntry();
+                fileEntry.ReadEntry(EncryptedData);
+                Files[i] = new PKGFile(fileEntry, EncryptedData);
+            }
         }
     }
 }

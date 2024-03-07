@@ -1,18 +1,5 @@
 ﻿namespace SCEllSharp.PKG
 {
-    // unsure on these, total guesses from ps3devwiki / RPCS3 / RB3 PKGs
-    [Flags]
-    internal enum PKGFileFlags : uint
-    {
-        None = 0,
-        NPDRM = 0x1, // set on all files?
-        EDAT = 0x2,
-        Directory = 0x4,
-        SELF = 0x100,
-        PSPCrypto = 0x10000000,
-        Overwrites = 0x80000000
-    }
-
     internal class PKGFileEntry
     {
         public uint FilenameOffset;

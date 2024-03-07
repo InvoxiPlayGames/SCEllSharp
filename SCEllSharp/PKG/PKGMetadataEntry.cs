@@ -1,19 +1,5 @@
 ﻿namespace SCEllSharp.PKG
 {
-    internal enum PKGMetadataType
-    {
-        None = 0x0,
-        DRMType = 0x1,
-        ContentType = 0x2,
-        PackageType = 0x3,
-        PackageSize = 0x4,
-        PackageVersion = 0x5,
-        QADigest = 0x7,
-        SystemAndAppVersion = 0x8,
-        UnknownAllZeroes = 0x9,
-        InstallDirectory = 0xA,
-    }
-
     internal class PKGMetadataEntry
     {
         public PKGMetadataType Type;

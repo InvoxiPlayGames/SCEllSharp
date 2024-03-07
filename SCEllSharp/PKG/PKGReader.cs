@@ -15,6 +15,11 @@ namespace SCEllSharp.PKG
 
         public string ContentID => Header.ContentID!;
 
+        internal PKGMetadataEntry[] GetMetadataEntries()
+        {
+            return MetadataEntries;
+        }
+
         public PKGContentType GetContentType()
         {
             foreach (PKGMetadataEntry type in MetadataEntries.Where((entry) => { return entry.Type == PKGMetadataType.ContentType; }))

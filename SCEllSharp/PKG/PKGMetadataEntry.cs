@@ -6,6 +6,8 @@
         public uint Length;
         public byte[]? Data;
 
+        public uint TotalSize => (uint)(0x8 + Data!.Length);
+
         public void ReadEntry(Stream stream)
         {
             Type = (PKGMetadataType)stream.ReadUInt32BE();

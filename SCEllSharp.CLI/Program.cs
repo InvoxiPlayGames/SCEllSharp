@@ -32,3 +32,10 @@ foreach (PKGFile file in pkg.Files)
     else
         file.ExtractToFile(Path.Combine(outputPath, file.Filename));
 }
+
+/*
+PKGWriter w = new PKGWriter(pkg);
+w.ContentID = "EP0006-BLES00986_00-ROCKBAND3REPACKD";
+FileStream f = File.Open("test.pkg", FileMode.Create, FileAccess.Write);
+w.WritePKG(f);
+*/

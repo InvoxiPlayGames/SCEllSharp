@@ -30,7 +30,7 @@ namespace SCEllSharp.Crypto
 
         public override void Flush()
         {
-            throw new NotImplementedException();
+            _base.Flush();
         }
 
         public override int Read(byte[] buffer, int offset, int count)

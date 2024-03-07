@@ -33,9 +33,14 @@ foreach (PKGFile file in pkg.Files)
         file.ExtractToFile(Path.Combine(outputPath, file.Filename));
 }
 
+//FileStream j = File.Open("encrypteddata.bin", FileMode.CreateNew, FileAccess.Write);
+//pkg.WriteEncryptedData(j);
+
 /*
-PKGWriter w = new PKGWriter(pkg);
-w.ContentID = "EP0006-BLES00986_00-ROCKBAND3REPACKD";
-FileStream f = File.Open("test.pkg", FileMode.Create, FileAccess.Write);
-w.WritePKG(f);
-*/
+if (fileName != "test.pkg")
+{
+    PKGWriter w = new PKGWriter(pkg);
+    w.ContentID = "EP0006-BLES00986_00-ROCKBAND3REPACKD";
+    FileStream f = File.Open("test.pkg", FileMode.Create, FileAccess.Write);
+    w.WritePKG(f);
+}*/

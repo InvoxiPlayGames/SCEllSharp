@@ -20,6 +20,21 @@ namespace SCEllSharp.PKG
             return MetadataEntries;
         }
 
+        public void WriteEncryptedData(Stream output)
+        {
+            byte[] j = new byte[0x4000];
+            EncryptedData.Position = 0;
+            int bytesLeft = (int)Header.DataSize;
+            int bytesRead = 0;
+            while (bytesLeft > 0)
+            {
+                int l = EncryptedData.Read(j, 0, bytesLeft > j.Length ? j.Length : bytesLeft);
+                output.Write(j, 0, l);
+                bytesRead += l;
+                bytesLeft -= l;
+            }
+        }
+
         public PKGContentType GetContentType()
         {
             foreach (PKGMetadataEntry type in MetadataEntries.Where((entry) => { return entry.Type == PKGMetadataType.ContentType; }))

@@ -43,8 +43,18 @@ namespace SCEllSharp.PKG
             {
                 // 0x20 for the file entry
                 fileEntryTableSize += 0x20;
-                filenameTableSize += file.Filename.Length + (file.Filename.Length % 0x10);
-                fileDataSize += file.FileSize + (file.FileSize % 0x10);
+
+                int filenameBytesLength = Encoding.ASCII.GetByteCount(file.Filename);
+                filenameTableSize += filenameBytesLength;
+                if (filenameBytesLength % 0x10 > 0)
+                    filenameTableSize += 0x10 - (filenameBytesLength % 0x10);
+
+                if (!file.IsDirectory)
+                {
+                    fileDataSize += file.FileSize;
+                    if (file.FileSize % 0x10 > 0)
+                        fileDataSize += 0x10 - (file.FileSize % 0x10);
+                }
             }
             long encryptedBodySize = fileEntryTableSize + filenameTableSize + fileDataSize;
 
@@ -68,7 +78,7 @@ namespace SCEllSharp.PKG
             header.DataSize = (ulong)encryptedBodySize;
             header.ContentID = ContentID;
             header.DebugDigest = new byte[0x10];
-            header.PackageIV = new byte[0x10];
+            header.PackageIV = [0x6C, 0xC6, 0x08, 0xD4, 0x6C, 0x84, 0xCE, 0x96, 0x7C, 0xDD, 0x83, 0xC1, 0xA6, 0xBB, 0x43, 0x69];
 
             // write it out to a MemoryStream to generate a digest
             MemoryStream headerStr = new MemoryStream(0xC0);
@@ -91,7 +101,8 @@ namespace SCEllSharp.PKG
             //outer.Flush();
 
             // start an encrypted stream
-            AES128CTRStream enc = new AES128CTRStream(outer, PS3Keys.PKGKeyAES, header.PackageIV);
+            // AES128CTRStream enc = new AES128CTRStream(outer, PS3Keys.PKGKeyAES, header.PackageIV);
+            Stream enc = outer;
 
             // prepare the file entry and filename tables
             int filenameTableBytesUsed = 0;
@@ -107,8 +118,15 @@ namespace SCEllSharp.PKG
                 entry.DataSize = (ulong)file.FileSize;
                 entry.Flags = file.Flags;
                 Array.Copy(filenameBytes, 0, filenameTable, filenameTableBytesUsed, filenameBytes.Length);
-                filenameTableBytesUsed += filenameBytes.Length + (filenameBytes.Length % 0x10);
-                totalFileOffsetUsed += file.FileSize + (file.FileSize % 0x10);
+                filenameTableBytesUsed += filenameBytes.Length;
+                if (filenameBytes.Length % 0x10 > 0)
+                    filenameTableBytesUsed += 0x10 - (filenameBytes.Length % 0x10);
+                if (!file.IsDirectory)
+                {
+                    totalFileOffsetUsed += file.FileSize;
+                    if (file.FileSize % 0x10 > 0)
+                        totalFileOffsetUsed += 0x10 - (file.FileSize % 0x10);
+                }
                 // write the entry
                 entry.WriteEntry(enc);
             }
@@ -118,6 +136,8 @@ namespace SCEllSharp.PKG
             // write the file data
             foreach(PKGFile file in Files)
             {
+                if (file.IsDirectory)
+                    continue;
                 Console.WriteLine(file.Filename);
                 byte[] buffer = new byte[0x4000];
                 int bytesToRead = file.FileSize;
@@ -125,16 +145,14 @@ namespace SCEllSharp.PKG
                 while (bytesToRead > 0)
                 {
                     int r = file.ReadData(buffer, bytesRead, bytesToRead > buffer.Length ? buffer.Length : bytesToRead);
-                    Console.WriteLine(r);
                     enc.Write(buffer, 0, r);
                     bytesRead += r;
                     bytesToRead -= r;
                 }
-                if ((file.FileSize % 0x10) > 0)
+                if (file.FileSize % 0x10 > 0)
                 {
-                    Console.WriteLine(file.FileSize % 0x10);
-                    byte[] filepadding = new byte[(file.FileSize % 0x10)];
-                    enc.Write(filepadding, 0, filepadding.Length);
+                    byte[] padfile = new byte[0x10 - (file.FileSize % 0x10)];
+                    enc.Write(padfile);
                 }
             }
 

@@ -151,23 +151,21 @@ namespace SCEllSharp.Crypto
             {
                 // generate our XOR stream for the CTR
                 _aesEncryptor.TransformBlock(_counter, 0, 0x10, cryptstream, 0);
-                int bytes_tformed = 0;
-                for (int j = offset_into_block; j < 0x10 && bytes_crypt < bytes_left; j++, bytes_crypt++) {
-                    cryptstream[j] ^= buffer[offset + j - offset_into_block];
-                    bytes_tformed++;
-                }
 
                 int crypt_count = bytes_left < 0x10
                     ? bytes_left > (0x10 - offset_into_block)
                     ? 0x10 - offset_into_block
                     : bytes_left
                     : 0x10 - offset_into_block;
+                for (int j = offset_into_block; j < offset_into_block + crypt_count; j++) {
+                    cryptstream[j] ^= buffer[offset + bytes_crypt];
+                    bytes_crypt++;
+                }
+
                 _stream.Write(cryptstream, offset_into_block, crypt_count);
 
                 bytes_left -= 0x10;
                 if (bytes_left < 0) bytes_left = 0;
-
-                offset += bytes_tformed;
 
                 // if we're going into a new block, don't offset anymore and increment our counter
                 offset_into_block = 0;

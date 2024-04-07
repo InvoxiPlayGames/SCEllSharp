@@ -24,6 +24,7 @@ Console.WriteLine(pkg.GetContentType());
 Console.WriteLine(pkg.GetDRMType());
 Console.WriteLine(pkg.GetFlags());
 Console.WriteLine();
+
 foreach (PKGFile file in pkg.Files)
 {
     Console.WriteLine($"{file.Filename} ({file.FileSize} bytes) ({file.Flags})");
@@ -32,9 +33,6 @@ foreach (PKGFile file in pkg.Files)
     else
         file.ExtractToFile(Path.Combine(outputPath, file.Filename));
 }
-
-//FileStream j = File.Open("encrypteddata.bin", FileMode.CreateNew, FileAccess.Write);
-//pkg.WriteEncryptedData(j);
 
 /*
 if (fileName != "test.pkg")

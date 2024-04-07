@@ -31,6 +31,16 @@ namespace SCEllSharp.PKG
                 MetadataEntries.Add(entry);
         }
 
+        public void AddDirectory(string dirname)
+        {
+            Files.Add(new PKGFile(dirname, PKGFileFlags.Directory | PKGFileFlags.Overwrites));
+        }
+
+        public void AddFile(PKGFile file)
+        {
+            Files.Add(file);
+        }
+
         public void WritePKG(Stream stream)
         {
             // wrap everything except the final output in a SHA-1 stream
@@ -62,7 +72,7 @@ namespace SCEllSharp.PKG
             foreach (PKGMetadataEntry entry in MetadataEntries)
                 totalMetadataSize += entry.TotalSize;
 
-            long totalPkgSize = 0xC0 + totalMetadataSize + encryptedBodySize + 0x20; // 0xC0 - header, 0x20 - footer
+            long totalPkgSize = 0xC0 + totalMetadataSize + encryptedBodySize + 0x40 + 0x20; // 0xC0 - header, 0x40 - signature?, 0x20 - footer
 
             // build the PKG header
             PKGHeader header = new();
@@ -101,8 +111,8 @@ namespace SCEllSharp.PKG
             //outer.Flush();
 
             // start an encrypted stream
-            // AES128CTRStream enc = new AES128CTRStream(outer, PS3Keys.PKGKeyAES, header.PackageIV);
-            Stream enc = outer;
+            AES128CTRStream enc = new AES128CTRStream(outer, PS3Keys.PKGKeyAES, header.PackageIV);
+            //Stream enc = outer; // uncomment line and comment above line to write encrypted contents
 
             // prepare the file entry and filename tables
             int filenameTableBytesUsed = 0;
@@ -155,6 +165,11 @@ namespace SCEllSharp.PKG
                     enc.Write(padfile);
                 }
             }
+
+            // write a signature, i think? hash nothing idk
+            // truthfully i don't know what goes here, you get SCE_NP_DRM_INSTALL_ERROR_FORMAT without it
+            // also, maybe it's not necessary on debug/non-finalized PKG files.
+            outer.Write(PKGDigest.GeneratePKGDigest(new byte[0x10], 0x10));
 
             // write the final SHA-1
             byte[] finalShaHash = outer.GetSHA1Hash()!;

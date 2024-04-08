@@ -53,6 +53,26 @@ namespace SCEllSharp
         }
 
         /// <summary>
+        /// Write an unsigned 16-bit Little-endian integer to the stream.
+        /// </summary>
+        /// <param name="s"></param>
+        /// <param name="uint16"></param>
+        /// <returns></returns>
+        public static void WriteUInt16LE(this Stream s, ushort uint16) => s.WriteInt16LE((short)uint16);
+
+        /// <summary>
+        /// Write a signed 16-bit Little-endian integer to the stream.
+        /// </summary>
+        /// <param name="s"></param>
+        /// <param name="int16"></param>
+        /// <returns></returns>
+        public static void WriteInt16LE(this Stream s, short int16)
+        {
+            byte[] tmp = BitConverter.GetBytes(int16);
+            s.Write(tmp, 0, 2);
+        }
+
+        /// <summary>
         /// Read an unsigned 16-bit Big-endian integer from the stream.
         /// </summary>
         /// <param name="s"></param>
@@ -192,6 +212,26 @@ namespace SCEllSharp
         }
 
         /// <summary>
+        /// Write an unsigned 32-bit Little-endian integer to the stream.
+        /// </summary>
+        /// <param name="s"></param>
+        /// <param name="uint32"></param>
+        /// <returns></returns>
+        public static void WriteUInt32LE(this Stream s, uint uint32) => s.WriteInt32LE((int)uint32);
+
+        /// <summary>
+        /// Write a signed 32-bit Little-endian integer to the stream.
+        /// </summary>
+        /// <param name="s"></param>
+        /// <param name="int32"></param>
+        /// <returns></returns>
+        public static void WriteInt32LE(this Stream s, int int32)
+        {
+            byte[] tmp = BitConverter.GetBytes(int32);
+            s.Write(tmp, 0, 4);
+        }
+
+        /// <summary>
         /// Read an unsigned 32-bit Big-endian integer from the stream.
         /// </summary>
         /// <param name="s"></param>
@@ -263,6 +303,26 @@ namespace SCEllSharp
             ret |= (tmp[2] << 16) & 0x00FF0000L;
             ret |= (tmp[3] << 24) & 0xFF000000L;
             return ret;
+        }
+
+        /// <summary>
+        /// Write an unsigned 64-bit Little-endian integer to the stream.
+        /// </summary>
+        /// <param name="s"></param>
+        /// <param name="uint64"></param>
+        /// <returns></returns>
+        public static void WriteUInt64LE(this Stream s, ulong uint64) => s.WriteInt64LE((long)uint64);
+
+        /// <summary>
+        /// Write a signed 64-bit Little-endian integer to the stream.
+        /// </summary>
+        /// <param name="s"></param>
+        /// <param name="int64"></param>
+        /// <returns></returns>
+        public static void WriteInt64LE(this Stream s, long int64)
+        {
+            byte[] tmp = BitConverter.GetBytes(int64);
+            s.Write(tmp, 0, 8);
         }
 
         /// <summary>

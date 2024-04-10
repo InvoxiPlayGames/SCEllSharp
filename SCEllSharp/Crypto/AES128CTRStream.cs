@@ -78,7 +78,7 @@ namespace SCEllSharp.Crypto
         private void UpdatePosition(long position)
         {
             int block_num = (int)(position / 0x10);
-            Array.Copy(_iv, _counter, 0x10);
+            Buffer.BlockCopy(_iv, 0, _counter, 0, 0x10);
             for (int i = 0; i < block_num; i++)
                 IncrementCounter(_counter);
             return;

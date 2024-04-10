@@ -1,4 +1,5 @@
 ﻿using SCEllSharp.Crypto;
+using SCEllSharp.NPDRM;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -29,6 +30,46 @@ namespace SCEllSharp.PKG
                 Files.Add(file);
             foreach (PKGMetadataEntry entry in reader.GetMetadataEntries())
                 MetadataEntries.Add(entry);
+        }
+
+        internal void AddMetadataEntry(PKGMetadataType type, byte[] data)
+        {
+            PKGMetadataEntry? entry = MetadataEntries.Find((e) => { return e.Type == type; });
+            if (entry == null)
+            {
+                entry = new PKGMetadataEntry();
+                MetadataEntries.Add(entry);
+            }
+            entry.Type = type;
+            entry.SetData(data);
+        }
+
+        internal void SetPackageSize(long size)
+        {
+            byte[] bytes = BitConverter.GetBytes((ulong)size);
+            Array.Reverse(bytes);
+            AddMetadataEntry(PKGMetadataType.PackageSize, bytes);
+        }
+
+        public void SetDRMType(NPDRMType type)
+        {
+            byte[] bytes = BitConverter.GetBytes((uint)type);
+            Array.Reverse(bytes);
+            AddMetadataEntry(PKGMetadataType.DRMType, bytes);
+        }
+
+        public void SetContentType(PKGContentType type)
+        {
+            byte[] bytes = BitConverter.GetBytes((uint)type);
+            Array.Reverse(bytes);
+            AddMetadataEntry(PKGMetadataType.ContentType, bytes);
+        }
+
+        public void SetFlags(PKGFlags flags)
+        {
+            byte[] bytes = BitConverter.GetBytes((uint)flags);
+            Array.Reverse(bytes);
+            AddMetadataEntry(PKGMetadataType.PackageType, bytes);
         }
 
         public void AddDirectory(string dirname)
@@ -67,6 +108,8 @@ namespace SCEllSharp.PKG
                 }
             }
             long encryptedBodySize = fileEntryTableSize + filenameTableSize + fileDataSize;
+
+            SetPackageSize(encryptedBodySize);
 
             uint totalMetadataSize = 0x40; // for the signed footer
             foreach (PKGMetadataEntry entry in MetadataEntries)
@@ -144,12 +187,12 @@ namespace SCEllSharp.PKG
             enc.Write(filenameTable);
 
             // write the file data
-            foreach(PKGFile file in Files)
+            byte[] buffer = new byte[0x4000000];
+            foreach (PKGFile file in Files)
             {
                 if (file.IsDirectory)
                     continue;
                 Console.WriteLine(file.Filename);
-                byte[] buffer = new byte[0x4000];
                 int bytesToRead = file.FileSize;
                 int bytesRead = 0;
                 while (bytesToRead > 0)

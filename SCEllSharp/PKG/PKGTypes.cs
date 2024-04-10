@@ -56,11 +56,15 @@ namespace SCEllSharp.PKG
     public enum PKGFlags : uint
     {
         None = 0x0,
+        Unknown_0x1 = 0x1,
         EBOOT = 0x2,
         RequireLicense = 0x4,
+        Unknown_0x8 = 0x8,
         CumulativePatch = 0x10,
+        Unknown_0x20 = 0x20,
         RenameDirectory = 0x40,
         EDAT = 0x80,
+        Unknown_0x100 = 0x100,
         Emulator = 0x200,
         VSHModule = 0x400,
         DiscBinded = 0x800

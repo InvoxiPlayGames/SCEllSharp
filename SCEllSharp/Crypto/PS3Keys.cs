@@ -17,6 +17,18 @@ namespace SCEllSharp.Crypto
         public static readonly byte[] NPDRMContentHashKeyAES =
             { 0x9B, 0x51, 0x5F, 0xEA, 0xCF, 0x75, 0x06, 0x49, 0x81, 0xAA, 0x60, 0x4D, 0x91, 0xA5, 0x4E, 0x97 };
 
+        /// <summary>
+        /// XOR key, XORed with the klicensee, to generate a AES-128-CMAC hash of the NPD header in NPDRM files.
+        /// </summary>
+        public static readonly byte[] NPDRMHeaderHashKeyXOR =
+            { 0x6B, 0xA5, 0x29, 0x76, 0xEF, 0xDA, 0x16, 0xEF, 0x3C, 0x33, 0x9F, 0xB2, 0x97, 0x1E, 0x25, 0x6B };
+
+        /// <summary>
+        /// Klicensee used for NPDRM "Free" content type.
+        /// </summary>
+        public static readonly byte[] NPDRMFreeKlicensee =
+            { 0x72, 0xF9, 0x90, 0x78, 0x8F, 0x9C, 0xFF, 0x74, 0x57, 0x25, 0xF0, 0x8E, 0x4C, 0x12, 0x83, 0x87 };
+
 
         /// <summary>
         /// ECDSA curve used for validating signatures of almost everything. Inverted from curve 2 of the VSH.

@@ -11,7 +11,13 @@ namespace SCEllSharp.PKG
         private int StreamOffset;
         private Stream? FileData;
 
-        public bool IsDirectory => Flags.HasFlag(PKGFileFlags.Directory) && !Flags.HasFlag(PKGFileFlags.Unknown_0x200);
+        // logic behind this one is messy
+        // on PS3, the directory "flag" just means it's a directory, everyone's happy
+        // on PSP, the EBOOT.PBP file has the directory "flag" but also has bit 0x200 set
+        // on PSVita, there seems to be an actual flag for directories.
+        // but really the Flags value *is not a bitfield*, so this is a !! TODO !! FIXME !!
+        public bool IsDirectory => (Flags.HasFlag(PKGFileFlags.Directory) && !Flags.HasFlag(PKGFileFlags.Unknown_0x200) && !Flags.HasFlag(PKGFileFlags.VitaCrypto))
+            || Flags.HasFlag(PKGFileFlags.VitaDirectory);
 
         internal PKGFile(PKGFileEntry entry, Stream basestream)
         {

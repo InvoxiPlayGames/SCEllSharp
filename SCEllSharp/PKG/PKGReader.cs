@@ -1,6 +1,7 @@
 ﻿using SCEllSharp.Crypto;
 using SCEllSharp.NPDRM;
 using System.Buffers.Binary;
+using System.Security.Cryptography;
 
 namespace SCEllSharp.PKG
 {
@@ -61,6 +62,7 @@ namespace SCEllSharp.PKG
                 throw new Exception("Package type was not that of a PS3 or PSP/PSVita PKG!");
 
             bool isPortable = Header.PackageType == 0x0002;
+            bool isVita = false;
             
             // verify the integrity of the file header
             byte[] digestbytes = File.ReadBytes(0x40);
@@ -77,8 +79,9 @@ namespace SCEllSharp.PKG
                     throw new Exception("Package extended magic was not that of a PKG!");
                 if (ExtendedHeader.PkgExtRevision != 0x00000001)
                     throw new Exception("Package extended revision was not that of a PKG!");
-                if (ExtendedHeader.KeyID != 0x00000001)
-                    throw new Exception("PS Vita packages are not supported!");
+                if (ExtendedHeader.KeyID != 0x00000001 && ExtendedHeader.KeyID != 0xC0000002)
+                    throw new Exception("PSM, LiveArea and other packages are not supported!");
+                isVita = (ExtendedHeader.KeyID & 0xC0000000) == 0xC0000000;
                 // TODO: validate the digests from all that
                 ExtendedData = File.ReadBytes((int)ExtendedHeader.ExtendedDataSize);
             }
@@ -104,12 +107,33 @@ namespace SCEllSharp.PKG
 
             // set up the encrypted data stream
             File.Position = (int)Header.DataOffset;
-            EncryptedData = new AES128CTRStream(file, PS3Keys.PKGKeyAES, Header.PackageIV!, (long)Header.DataSize);
-            if (isPortable) {
-                // set up the alternative encryption key
-                // TODO: do any PS3 packages do this?
-                EncryptedData.AddAltKey(PSPKeys.PKGKeyAES);
-                EncryptedData.AltKey = true; // file table uses the alt key
+            if (!isVita)
+            {
+                // PS3/PSP packages will always use a fixed key using the package IV as an IV
+                EncryptedData = new AES128CTRStream(file, PS3Keys.PKGKeyAES, Header.PackageIV!, (long)Header.DataSize);
+                if (isPortable) {
+                    // set up the alternative encryption key for PSP packages, where some files may use PSP crypto
+                    // TODO: do any PS3 packages do this?
+                    EncryptedData.AddAltKey(PSPKeys.PKGKeyAES);
+                    EncryptedData.AltKey = true; // file table uses the alt key
+                }
+            }
+            else
+            {
+                // PS Vita packages derive their decryption key by encrypting the IV with a key to create a "session key"
+                using (Aes aes = Aes.Create())
+                {
+                    aes.IV = new byte[0x10];
+                    // TODO: support the other key types
+                    aes.Key = PSVitaKeys.PKGKeyVitaAES;
+                    aes.Mode = CipherMode.ECB;
+                    using(var enc = aes.CreateEncryptor())
+                    {
+                        byte[] sessionKey = new byte[0x10];
+                        enc.TransformBlock(Header.PackageIV!, 0, 0x10, sessionKey, 0);
+                        EncryptedData = new AES128CTRStream(file, sessionKey, Header.PackageIV!, (long)Header.DataSize);
+                    }
+                }
             }
 
             // read in information about each file

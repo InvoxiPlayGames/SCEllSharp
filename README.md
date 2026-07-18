@@ -8,10 +8,14 @@ on the PS3, PSP and PS Vita consoles. (and PS4, if you count PARAM.SFO)
 * Read and write encrypted retail PS3 PKG files.
     * Faster than Sony's SDK!
     * Able to verify signatures (on Windows)
+* Read and write PARAM.SFO files.
 * Read encrypted retail PSP PKG files.
     * Work in progress, might be unreliable...
     * This might have added regressions to the above. Oops.
-* Read and write PARAM.SFO files.
+* Read the file list and PFS metadata of retail PS Vita PKG files.
+    * Work in progress, WILL be unreliable.
+    * Can not decrypt files that require PFS/klicensee.
+    * Not to be confused with PS4 PFS, which is new and excitingly different.
 
 ## Used by...
 

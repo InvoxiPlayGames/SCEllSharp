@@ -1,4 +1,5 @@
 ﻿using System.Text;
+using SCEllSharp.Crypto;
 
 namespace SCEllSharp.PKG
 {
@@ -10,7 +11,7 @@ namespace SCEllSharp.PKG
         private int StreamOffset;
         private Stream? FileData;
 
-        public bool IsDirectory => Flags.HasFlag(PKGFileFlags.Directory);
+        public bool IsDirectory => Flags.HasFlag(PKGFileFlags.Directory) && !Flags.HasFlag(PKGFileFlags.Unknown_0x200);
 
         internal PKGFile(PKGFileEntry entry, Stream basestream)
         {
@@ -21,11 +22,24 @@ namespace SCEllSharp.PKG
 
             // read in the filename from the data stream
             long currentPos = basestream.Position;
+            bool currentAlt = false;
+            if (basestream is AES128CTRStream)
+            {
+                AES128CTRStream baseaes = (AES128CTRStream)basestream;
+                currentAlt = baseaes.AltKey;
+                baseaes.AltKey = Flags.HasFlag(PKGFileFlags.PSPCrypto);
+            }
             byte[] filenameBytes = new byte[entry.FilenameSize];
             basestream.Position = entry.FilenameOffset;
             basestream.Read(filenameBytes, 0, (int)entry.FilenameSize);
             basestream.Position = currentPos;
             Filename = Encoding.ASCII.GetString(filenameBytes);
+            // TODO: clean this up, reduce code reuse
+            if (basestream is AES128CTRStream)
+            {
+                AES128CTRStream baseaes = (AES128CTRStream)basestream;
+                baseaes.AltKey = currentAlt;
+            }
         }
 
         public PKGFile(string filename, PKGFileFlags flags, Stream fileData, int fileSize, int streamOffset)
@@ -70,11 +84,17 @@ namespace SCEllSharp.PKG
 
         public int ReadData(byte[] buffer, int offset_in_file, int length)
         {
-            if (Flags.HasFlag(PKGFileFlags.Directory))
+            if (IsDirectory)
                 throw new Exception("Can't read file data from a directory!");
 
             if (FileData == null)
                 throw new Exception("File has no base stream!");
+
+            if (FileData is AES128CTRStream)
+            {
+                AES128CTRStream baseaes = (AES128CTRStream)FileData;
+                baseaes.AltKey = Flags.HasFlag(PKGFileFlags.PSPCrypto);
+            }
 
             FileData!.Seek(offset_in_file + StreamOffset, SeekOrigin.Begin);
             int r = FileData!.Read(buffer, 0, length);

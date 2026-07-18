@@ -39,6 +39,7 @@ namespace SCEllSharp.PKG
     }
 
     // unsure on these, total guesses from ps3devwiki / RPCS3 / RB3 PKGs
+    // probably very wrong.
     [Flags]
     public enum PKGFileFlags : uint
     {
@@ -47,6 +48,7 @@ namespace SCEllSharp.PKG
         EDAT = 0x2,
         Directory = 0x4,
         SELF = 0x100,
+        Unknown_0x200 = 0x200, // used on some PSP files
         PSPCrypto = 0x10000000,
         Overwrites = 0x80000000
     }

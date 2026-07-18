@@ -16,6 +16,10 @@ namespace SCEllSharp.Crypto
         // managed AES-128-ECB context
         private Aes _aes;
         private ICryptoTransform _aesEncryptor;
+        // managed AES-128-ECB context for alternative encryption
+        private byte[]? _altKey;
+        private Aes? _altAes;
+        private bool _usingAlt;
         // current counter for AES-128-CTR
         private byte[] _counter = new byte[0x10];
 
@@ -58,6 +62,36 @@ namespace SCEllSharp.Crypto
             _hasLength = true;
             _length = length;
         }
+
+        public void AddAltKey(byte[] key)
+        {
+            _altKey = key;
+            // use AES-128-ECB as a base for our CTR algorithm (see UpdatePosition/IncrementCounter)
+            _altAes = Aes.Create();
+            _altAes.BlockSize = 128;
+            _altAes.Mode = CipherMode.ECB;
+            _altAes.Key = _altKey;
+            _altAes.IV = new byte[0x10]; // blank IV for the ECB
+            _altAes.Padding = PaddingMode.None;
+        }
+
+        private void ToggleAltKey(bool value)
+        {
+            if (_usingAlt == value) return; // don't create new AES encryptor if we were already using it
+            _usingAlt = value;
+            if (_usingAlt)
+            {
+                if (_altKey == null || _altAes == null)
+                    throw new Exception("Alt encryption toggled without an alt key!");
+                _aesEncryptor = _altAes.CreateEncryptor();
+            }
+            else
+            {
+                _aesEncryptor = _aes.CreateEncryptor();
+            }
+        }
+
+        public bool AltKey { get => _usingAlt; set => ToggleAltKey(value); }
 
         public override bool CanRead => _position < Length && _position >= 0;
 

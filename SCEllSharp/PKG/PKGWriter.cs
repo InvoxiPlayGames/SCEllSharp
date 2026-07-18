@@ -23,6 +23,8 @@ namespace SCEllSharp.PKG
 
         public PKGWriter(PKGReader reader)
         {
+            if (reader.IsPortablePKG)
+                throw new Exception("Writing PSP/PSVita packages is currently not supported!");
             ContentID = reader.ContentID;
             Files = new List<PKGFile>();
             MetadataEntries = new List<PKGMetadataEntry>();

@@ -29,13 +29,21 @@ namespace SCEllSharp.PKG
             bool cmac_valid = cmac_in_digest.SequenceEqual(cmac_hash);
             bool sha1_valid = sha1_in_digest.SequenceEqual(last_8_sha1);
 
-            ECParameters ecp = new ECParameters
+            bool signature_valid = false;
+            try
             {
-                Curve = PS3Keys.VSHCurve2InvECDSA,
-                Q = PS3Keys.NPDRMPublicKeyECDSA
-            };
-            ECDsa dsa = ECDsa.Create(ecp);
-            bool signature_valid = dsa.VerifyHash(sha1_hash, signature_in_digest);
+                ECParameters ecp = new ECParameters
+                {
+                    Curve = PS3Keys.VSHCurve2InvECDSA,
+                    Q = PS3Keys.NPDRMPublicKeyECDSA
+                };
+                ECDsa dsa = ECDsa.Create(ecp);
+                signature_valid = dsa.VerifyHash(sha1_hash, signature_in_digest);
+            }
+            catch (PlatformNotSupportedException)
+            {
+                // do nothing, apparently .NET doesn't support this on non-Windows
+            }
 
             return (cmac_valid, signature_valid, sha1_valid);
         }

@@ -23,6 +23,10 @@ Console.WriteLine(pkg.ContentID);
 Console.WriteLine(pkg.GetContentType());
 Console.WriteLine(pkg.GetDRMType());
 Console.WriteLine(pkg.GetFlags());
+if (pkg.IsPortablePKG)
+    Console.WriteLine("PSP/PS Vita");
+else
+    Console.WriteLine("PS3");
 Console.WriteLine();
 
 foreach (PKGFile file in pkg.Files)
